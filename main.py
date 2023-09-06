@@ -19,7 +19,6 @@ def main():
                     for llist in lists:
                         l = List.from_json(json.dumps(llist))
                         if(l.id):
-                            print(l.id)
                             cards = trelloapi.get_api_call("lists", l.id, "cards")
                             # print(cards)
                             if isinstance(cards, list):
