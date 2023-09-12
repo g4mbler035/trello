@@ -4,32 +4,42 @@ from models.card import Card
 from models.list import List
 from trelloapi.trello_api import TrelloAPI
 from models.board import Board
+from dotenv import load_dotenv
+
+import os
 def main():
+    load_dotenv()
 
-    trelloapi = TrelloAPI("8eb49dc2edac940d34abefa9c42c2b08", "ATTA32e8d1ccec9186eb0176fd97a2411f40d3fcfd9b2ed643c29dd0d302c926e17728FF51B8")
+    api_key = os.getenv("API_KEY")
+    api_token = os.getenv("API_TOKEN")
+    resource_id = os.getenv("RESOURCE_ID")
 
-    boards_list = trelloapi.get_api_call("organizations","6489550fc20357debf4c8d65", "boards")
+    trelloapi = TrelloAPI(api_key, api_token)
 
-    if isinstance(boards_list, list):
-        for board in boards_list:
-            b = Board.from_json(json.dumps(board))
-            if b.id:
-                lists = trelloapi.get_api_call("boards", b.id, "lists")
-                if isinstance(lists, list):
-                    for llist in lists:
-                        l = List.from_json(json.dumps(llist))
-                        if(l.id):
-                            cards = trelloapi.get_api_call("lists", l.id, "cards")
-                            # print(cards)
-                            if isinstance(cards, list):
-                                for card in cards:
-                                    c = Card.from_json(json.dumps(card))
-                                    print(c.id + ", " + c.name + ", " + c.desc)
-                        else:
-                            print("List ID is not valid")
-            else:
-                print("Board ID is not valid")
+    boards_list = trelloapi.get_api_call("GET", "organizations", resource_id, "boards")
+
+    if not isinstance(boards_list, list):
+        return False
+
+    for board in boards_list:
+        b = Board.from_json(json.dumps(board))
+        if not b.id:
+            return False
+        lists = trelloapi.get_api_call("GET","boards", b.id, "lists")
+        if not isinstance(lists, list):
+            return False
+        for llist in lists:
+            l = List.from_json(json.dumps(llist))
+            if not l.id:
+                return False
+            cards = trelloapi.get_api_call("GET","lists", l.id, "cards")
+            if not isinstance(cards, list):
+                return False
+            for card in cards:
+                c = Card.from_json(json.dumps(card))
+                print(c.id + ", " + c.name + ", " + c.desc)
 
     print("Continued...")
+
 if __name__ == '__main__':
     main()

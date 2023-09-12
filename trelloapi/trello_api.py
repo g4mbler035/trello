@@ -1,12 +1,20 @@
 import requests
-from dataclasses import dataclass
-@dataclass
-class TrelloAPI:
-    api_key : str = ""
-    api_token : str = ""
 
-    def get_api_call(self, resource_type, resource_id, resource_path):
-        api_url = f"https://api.trello.com/1/{resource_type}/{resource_id}/{resource_path}"
+class APIBase:
+    api_key: str
+    api_token: str
+
+    def __init__(self, api_key, api_token):
+        self.api_key = api_key
+        self.api_token = api_token
+
+class TrelloAPI(APIBase):
+
+    base_url: str = "https://api.trello.com"
+    api_version: str = "1"
+
+    def get_api_call(self, type_req, resource_type, resource_id, resource_path):
+        api_url = f"{self.base_url}/{self.api_version}/{resource_type}/{resource_id}/{resource_path}"
 
         header = {
             "Accept": "application/json"
@@ -18,15 +26,20 @@ class TrelloAPI:
 
         try:
             response = requests.request(
-                "GET",
+                type_req,
                 api_url,
                 headers=header,
                 params=query
             )
             response.raise_for_status()
-
+        except requests.exceptions.HTTPError as e:
+            print("Http Error: ", e)
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error: ", e)
+        except requests.exceptions.Timeout as e:
+            print("Timeout Error: ", e)
         except requests.exceptions.RequestException as e:
-            print(e)
+            print("Request exception: ", e)
 
         if response.status_code == 200:
             try:
@@ -37,4 +50,4 @@ class TrelloAPI:
             return False
 
 
-        return response.json()
+        return resp_dict
